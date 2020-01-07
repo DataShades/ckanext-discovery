@@ -9,5 +9,6 @@ they are loaded in the browser.
 {% set provide_suggestions = h.discovery_as_bool(
     h.discovery_get_config('search_suggestions.provide_suggestions', True)) %}
 {% if provide_suggestions %}
-    {% resource 'discovery_search_suggestions/search_suggestions' %}
+    {% set type = 'asset' if h.ckan_version() > '2.9' else 'resource' %}
+    {% include 'ckanext-discovery/snippets/search_suggestions_' ~ type ~ '.html' %}
 {% endif %}

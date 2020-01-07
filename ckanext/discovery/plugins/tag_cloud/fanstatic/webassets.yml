@@ -1,0 +1,4 @@
+tag_cloud:
+  output: ckanext-discovery/%(version)s_tag_cloud.css
+  contents:
+    - tag_cloud.css

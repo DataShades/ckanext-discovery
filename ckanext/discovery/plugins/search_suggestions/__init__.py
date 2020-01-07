@@ -151,7 +151,7 @@ def _is_user_text_search(context, query):
     # See https://github.com/ckan/ckanext-searchhistory/issues/1#issue-32079108
     try:
         if (
-            context.controller != 'package'
+            context.controller not in ('package', 'dataset')
             or context.action != 'search'
             or (query or '').strip() in (':', '*:*')
         ):
@@ -167,6 +167,15 @@ class SearchSuggestionsPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IPackageController, inherit=True)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IAuthFunctions)
+
+    if toolkit.check_ckan_version("2.9"):
+        plugins.implements(plugins.IClick)
+
+    # IClick
+
+    def get_commands(self):
+        from .cli import search_suggestions
+        return [search_suggestions]
 
     #
     # IConfigurer
@@ -221,4 +230,3 @@ class SearchSuggestionsPlugin(plugins.SingletonPlugin):
         return {
             'discovery_search_suggest': search_suggest_auth,
         }
-

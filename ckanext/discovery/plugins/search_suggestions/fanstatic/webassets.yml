@@ -1,0 +1,14 @@
+search_suggestions_js:
+  output: ckanext-discovery/%(version)s_search_suggestions.js
+  filter: rjsmin
+  contents:
+    - vendor/jquery-ui-autocomplete/jquery-ui.js
+    - vendor/jquery.ui.autocomplete.html.js
+    - search_suggestions.js
+search_suggestions_css:
+  output: ckanext-discovery/%(version)s_search_suggestions.css
+  contents:
+    - vendor/jquery-ui-autocomplete/jquery-ui.css
+    - vendor/jquery-ui-autocomplete/jquery-ui.structure.css
+    - vendor/jquery-ui-autocomplete/jquery-ui.theme.css
+    - search_suggestions.css
