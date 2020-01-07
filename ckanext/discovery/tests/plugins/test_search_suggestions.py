@@ -4,6 +4,8 @@
 Tests for ``ckanext.discovery.plugins.search_suggestions``.
 '''
 
+from builtins import range
+from builtins import object
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 

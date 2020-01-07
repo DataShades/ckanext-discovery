@@ -21,7 +21,7 @@ class SolrQueryConfigPlugin(plugins.SingletonPlugin):
     FORCE_PREFIX = CONFIG_PREFIX + 'force.'
 
     def before_search(self, params):
-        for key, value in config.iteritems():
+        for key, value in config.items():
             if key.startswith(self.DEFAULT_PREFIX):
                 key = key[len(self.DEFAULT_PREFIX):]
                 try:

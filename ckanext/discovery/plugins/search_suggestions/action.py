@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from builtins import zip
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -23,7 +24,7 @@ log = logging.getLogger(__name__)
 
 def search_suggest_schema():
     return {
-        'q': [not_missing, unicode]
+        'q': [not_missing, str]
     }
 
 
@@ -154,7 +155,7 @@ def search_suggest_action(context, data_dict):
     # already finished is more important than to an auto-completion
     # we're suggesting.
     weights = collections.defaultdict(int)
-    weights.update((t[0].term, s) for t, s in scores.iteritems())
+    weights.update((t[0].term, s) for t, s in scores.items())
     weights.update((w, 1) for w in query.words)
 
     # Score extension candidates
@@ -169,7 +170,7 @@ def search_suggest_action(context, data_dict):
     # Step 3: Format suggestions for output
     #
 
-    suggestions = sorted(scores.iterkeys(), key=scores.get, reverse=True)
+    suggestions = sorted(iter(scores.keys()), key=scores.get, reverse=True)
     suggestions = list(suggestions)[:limit]
     suggestions = [' '.join([t.term for t in terms]) for terms in suggestions]
     log.debug('suggestions = {}'.format(suggestions))

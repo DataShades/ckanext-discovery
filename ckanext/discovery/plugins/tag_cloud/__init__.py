@@ -30,9 +30,9 @@ def bin_tags(num_tags=20, num_bins=5):
     result = toolkit.get_action('package_search')({}, data_dict)
 
     tags_by_count = collections.defaultdict(list)
-    for tag, count in result['facets']['tags'].iteritems():
+    for tag, count in result['facets']['tags'].items():
         tags_by_count[count].append(tag)
-    tags_by_count = sorted(tags_by_count.iteritems(), key=lambda t: t[0])
+    tags_by_count = sorted(iter(tags_by_count.items()), key=lambda t: t[0])
     log.debug('tags_by_count: {}'.format(tags_by_count))
 
     bins = {}

@@ -4,6 +4,8 @@
 Tests for ``ckanext.discovery.plugins.tag_cloud``.
 '''
 
+from builtins import range
+from builtins import object
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -29,7 +31,7 @@ def set_tags(**kwargs):
     Before new datasets are created all existing datasets are purged.
     '''
     purge_datasets()
-    for tag, count in kwargs.iteritems():
+    for tag, count in kwargs.items():
         for i in range(count):
             factories.Dataset(tags=[{'name': tag}])
 
@@ -117,7 +119,7 @@ class TestUI(helpers.FunctionalTestBase):
         response = app.get('/')
         body = response.body.decode('utf-8')
         regex = r'<a\s+class="level-{}"\s+href="[^"]*"\s*>{}</a>'
-        for tag, count in tags.iteritems():
+        for tag, count in tags.items():
             assert_regex_search(regex.format(count, tag), body)
 
     def test_resources(self):
