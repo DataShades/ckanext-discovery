@@ -1,11 +1,15 @@
 # encoding: utf-8
 
-'''
+"""
 Helpers for testing ``ckanext.discovery``.
-'''
+"""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import contextlib
 import functools
@@ -44,7 +48,7 @@ except ImportError:
 
     # Copied from CKAN 2.7
     def paster(*args, **kwargs):
-        '''
+        """
         Call a paster command.
 
         All arguments are parsed and passed on to the command. The
@@ -68,10 +72,10 @@ except ImportError:
 
         :returns: A tuple containing the return code, the content of
             STDOUT, and the content of STDERR.
-        '''
-        fail_on_error = kwargs.pop(u'fail_on_error', True)
-        args = list(args) + [u'--config=' + config[u'__file__']]
-        sys.stdout, sys.stderr = StringIO(u''), StringIO(u'')
+        """
+        fail_on_error = kwargs.pop("fail_on_error", True)
+        args = list(args) + ["--config=" + config["__file__"]]
+        sys.stdout, sys.stderr = StringIO(""), StringIO("")
         code = 0
         try:
             run(args)
@@ -81,10 +85,17 @@ except ImportError:
             stdout, stderr = sys.stdout.getvalue(), sys.stderr.getvalue()
             sys.stdout, sys.stderr = sys.__stdout__, sys.__stderr__
         if code != 0 and fail_on_error:
-            raise AssertionError(u'Paster command exited with non-zero return code {}: {}'.format(code, stderr))
+            raise AssertionError(
+                "Paster command exited with non-zero return code {}: {}".format(
+                    code, stderr
+                )
+            )
         if stderr.strip() and fail_on_error:
-            raise AssertionError(u'Paster command wrote to STDERR: {}'.format(stderr))
+            raise AssertionError(
+                "Paster command wrote to STDERR: {}".format(stderr)
+            )
         return code, stdout, stderr
+
 
 try:
     from ckan.tests.helpers import recorded_logs
@@ -94,9 +105,13 @@ except ImportError:
 
     # Copied from CKAN 2.7
     @contextlib.contextmanager
-    def recorded_logs(logger=None, level=logging.DEBUG,
-                      override_disabled=True, override_global_level=True):
-        u'''
+    def recorded_logs(
+        logger=None,
+        level=logging.DEBUG,
+        override_disabled=True,
+        override_global_level=True,
+    ):
+        """
         Context manager for recording log messages.
 
         :param logger: The logger to record messages from. Can either be a
@@ -136,7 +151,7 @@ except ImportError:
                 logger.info(u'Hello, world!')
 
             logs.assert_log(u'info', u'world')
-        '''
+        """
         if logger is None:
             logger = logging.getLogger()
         elif not isinstance(logger, logging.Logger):
@@ -163,10 +178,9 @@ except ImportError:
             logger.disabled = disabled
             logger.manager.disable = manager_level
 
-
     # Copied from CKAN 2.7
     class RecordingLogHandler(logging.Handler):
-        u'''
+        """
         Log handler that records log messages for later inspection.
 
         You can inspect the recorded messages via the ``messages`` attribute
@@ -175,7 +189,8 @@ except ImportError:
 
         This class is rarely useful on its own, instead use
         :py:func:`recorded_logs` to temporarily record log messages.
-        '''
+        """
+
         def __init__(self, *args, **kwargs):
             super(RecordingLogHandler, self).__init__(*args, **kwargs)
             self.clear()
@@ -184,7 +199,7 @@ except ImportError:
             self.messages[record.levelname.lower()].append(record.getMessage())
 
         def assert_log(self, level, pattern, msg=None):
-            u'''
+            """
             Assert that a certain message has been logged.
 
             :param string pattern: A regex which the message has to match.
@@ -196,28 +211,31 @@ except ImportError:
                 log message was not logged.
 
             :raises AssertionError: If the expected message was not logged.
-            '''
+            """
             compiled_pattern = re.compile(pattern)
             for log_msg in self.messages[level]:
                 if compiled_pattern.search(log_msg):
                     return
             if not msg:
                 if self.messages[level]:
-                    lines = u'\n    '.join(self.messages[level])
-                    msg = (u'Pattern "{}" was not found in the log messages for '
-                           + u'level "{}":\n    {}').format(pattern, level, lines)
+                    lines = "\n    ".join(self.messages[level])
+                    msg = (
+                        'Pattern "{}" was not found in the log messages for '
+                        + 'level "{}":\n    {}'
+                    ).format(pattern, level, lines)
                 else:
-                    msg = (u'Pattern "{}" was not found in the log messages for '
-                           + u'level "{}" (no messages were recorded for that '
-                           + u'level).').format(pattern, level)
+                    msg = (
+                        'Pattern "{}" was not found in the log messages for '
+                        + 'level "{}" (no messages were recorded for that '
+                        + "level)."
+                    ).format(pattern, level)
             raise AssertionError(msg)
 
         def clear(self):
-            u'''
+            """
             Clear all captured log messages.
-            '''
+            """
             self.messages = collections.defaultdict(list)
-
 
 
 # Copied from ckanext-extractor
@@ -230,7 +248,7 @@ def call_action_with_auth(action, context=None, **kwargs):
     """
     if context is None:
         context = {}
-    context['ignore_auth'] = False
+    context["ignore_auth"] = False
     return call_action(action, context, **kwargs)
 
 
@@ -239,39 +257,43 @@ def assert_anonymous_access(action, **kwargs):
     """
     Assert that an action can be called anonymously.
     """
-    context = {'user': ''}
+    context = {"user": ""}
     try:
         call_action_with_auth(action, context, **kwargs)
     except NotAuthorized:
-        raise AssertionError('"{}" cannot be called anonymously.'.format(
-                             action))
+        raise AssertionError(
+            '"{}" cannot be called anonymously.'.format(action)
+        )
 
 
 # Adapted from ckanext-extractor
 def with_plugin(cls):
-    '''
+    """
     Activate a plugin during a function's execution.
 
     The plugin instance is passed to the function as an additional
     parameter.
-    '''
+    """
+
     def decorator(f):
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
             with temporarily_enabled_plugin(cls) as plugin:
                 args = list(args) + [plugin]
                 return f(*args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
 @contextlib.contextmanager
 def temporarily_enabled_plugin(cls):
-    '''
+    """
     Context manager for temporarily enabling a plugin.
 
     Returns the plugin instance.
-    '''
+    """
     plugin = cls()
     plugin.activate()
     try:
@@ -282,19 +304,19 @@ def temporarily_enabled_plugin(cls):
 
 
 def assert_regex_search(regex, string):
-    '''
+    """
     Assert that a regular expression search finds a match.
-    '''
+    """
     m = re.search(regex, string, flags=re.UNICODE)
     if m is None:
-        raise AssertionError('{!r} finds no match in {!r}'.format(regex,
-                             string))
+        raise AssertionError(
+            "{!r} finds no match in {!r}".format(regex, string)
+        )
 
 
 def purge_datasets():
-    '''
+    """
     Purge all existing datasets.
-    '''
+    """
     for pkg in Session.query(Package):
-        call_action('dataset_purge', id=pkg.id)
-
+        call_action("dataset_purge", id=pkg.id)

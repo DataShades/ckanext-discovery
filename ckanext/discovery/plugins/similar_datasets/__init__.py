@@ -1,7 +1,11 @@
 # encoding: utf-8
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 import json
@@ -16,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def get_similar_datasets(id, max_num=5):
-    '''
+    """
     Get similar datasets for a dataset.
 
     :param string id: ID of the target dataset. This must be the actual
@@ -25,29 +29,33 @@ def get_similar_datasets(id, max_num=5):
     :param int max_num: Maximum number of datasets to return.
 
     :return: A list of similar dataset dicts sorted by decreasing score.
-    '''
+    """
     solr = make_connection()
     query = 'id:"{}"'.format(id)
-    fields_to_compare = 'text'
-    fields_to_return = 'id validated_data_dict score'
-    site_id = config.get('ckan.site_id')
-    filter_query = '''
+    fields_to_compare = "text"
+    fields_to_return = "id validated_data_dict score"
+    site_id = config.get("ckan.site_id")
+    filter_query = """
         +site_id:"{}"
         +dataset_type:dataset
         +state:active
         +capacity:public
-        '''.format(site_id)
-    results = solr.more_like_this(q=query,
-                                  mltfl=fields_to_compare,
-                                  fl=fields_to_return,
-                                  fq=filter_query,
-                                  rows=max_num)
-    log.debug('Similar datasets for {}:'.format(id))
-    print('Similar datasets for {}:'.format(id))
+        """.format(
+        site_id
+    )
+    results = solr.more_like_this(
+        q=query,
+        mltfl=fields_to_compare,
+        fl=fields_to_return,
+        fq=filter_query,
+        rows=max_num,
+    )
+    log.debug("Similar datasets for {}:".format(id))
+    print("Similar datasets for {}:".format(id))
     for doc in results.docs:
-        log.debug('  {id} (score {score})'.format(**doc))
-        print('  {id} (score {score})'.format(**doc))
-    return [json.loads(doc['validated_data_dict']) for doc in results.docs]
+        log.debug("  {id} (score {score})".format(**doc))
+        print("  {id} (score {score})".format(**doc))
+    return [json.loads(doc["validated_data_dict"]) for doc in results.docs]
 
 
 class SimilarDatasetsPlugin(plugins.SingletonPlugin):
@@ -59,7 +67,7 @@ class SimilarDatasetsPlugin(plugins.SingletonPlugin):
     #
 
     def update_config(self, config_):
-        toolkit.add_template_directory(config_, 'templates')
+        toolkit.add_template_directory(config_, "templates")
 
     #
     # ITemplateHelpers
@@ -67,6 +75,5 @@ class SimilarDatasetsPlugin(plugins.SingletonPlugin):
 
     def get_helpers(self):
         return {
-            'discovery_similar_datasets': get_similar_datasets,
+            "discovery_similar_datasets": get_similar_datasets,
         }
-

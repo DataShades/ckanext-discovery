@@ -1,8 +1,12 @@
 # encoding: utf-8
 
 from builtins import object
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 
@@ -16,20 +20,21 @@ log = logging.getLogger(__name__)
 
 
 class Object(object):
-    '''
+    """
     Base class for ORM classes.
 
     To create a declarative base for SQLAlchemy using this class::
 
         Base = declarative_base(cls=Object)
 
-    '''
+    """
+
     __abstract__ = True
 
     # Based on http://stackoverflow.com/a/37419325/857390
     @classmethod
     def get_or_create(cls, create_kwargs=None, **kwargs):
-        '''
+        """
         Get an instance or create it.
 
         At first all keyword arguments are used to search for a single
@@ -37,9 +42,9 @@ class Object(object):
         instance is found then it is created using the keyword arguments
         and any additional arguments given in the ``create_kwargs``
         dict. The created instance is then returned.
-        '''
+        """
         if not kwargs:
-            raise ValueError('No filter keyword arguments.')
+            raise ValueError("No filter keyword arguments.")
         try:
             # First assume that the object already exists
             return cls.one(**kwargs)
@@ -71,4 +76,3 @@ class Object(object):
     @classmethod
     def query(cls):
         return Session.query(cls)
-

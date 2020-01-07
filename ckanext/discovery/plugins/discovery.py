@@ -1,7 +1,11 @@
 # encoding: utf-8
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 import os.path
@@ -27,8 +31,8 @@ class DiscoveryPlugin(plugins.SingletonPlugin, DefaultTranslation):
 
     def get_helpers(self):
         return {
-            'discovery_get_config': get_config,
-            'discovery_as_bool': toolkit.asbool,
+            "discovery_get_config": get_config,
+            "discovery_as_bool": toolkit.asbool,
         }
 
     #
@@ -36,10 +40,9 @@ class DiscoveryPlugin(plugins.SingletonPlugin, DefaultTranslation):
     #
 
     def i18n_directory(self):
-        module = sys.modules['ckanext.discovery']
+        module = sys.modules["ckanext.discovery"]
         module_dir = os.path.abspath(os.path.dirname(module.__file__))
-        return os.path.join(module_dir, 'i18n')
+        return os.path.join(module_dir, "i18n")
 
     def i18n_domain(self):
-        return 'ckanext-discovery'
-
+        return "ckanext-discovery"
