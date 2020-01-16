@@ -106,7 +106,7 @@ def search_suggest_action(context, data_dict):
 
     log.debug("words = {}".format(query.words))
     log.debug("is_last_word_complete = {}".format(query.is_last_word_complete))
-    log.debug(b"context_terms = {}".format(query.context_terms))
+    log.debug("context_terms = {}".format(query.context_terms))
 
     # Maps tuples of terms to scores
     scores = {}
@@ -130,7 +130,7 @@ def search_suggest_action(context, data_dict):
             term_score = t.count / total_count
             context_score = _get_score(query.context_terms.union((t,)))
             scores[(t,)] = factor * (term_score + num_context * context_score)
-    log.debug(b"ac_terms = {}".format(ac_terms))
+    log.debug("ac_terms = {}".format(ac_terms))
 
     #
     # Step 2: Suggest an additional search term
@@ -148,7 +148,7 @@ def search_suggest_action(context, data_dict):
             other = coocc.term2 if coocc.term1 == term else coocc.term1
             ext_terms.add(other)
     ext_terms = [t for t in ext_terms if t.term not in query.words]
-    log.debug(b"ext_terms = {}".format(ext_terms))
+    log.debug("ext_terms = {}".format(ext_terms))
 
     # Combine extension candidates with auto-completion suggestions
     if ac_terms:
@@ -157,7 +157,7 @@ def search_suggest_action(context, data_dict):
         ]
     else:
         ac_ext_candidates = [(t,) for t in ext_terms]
-    log.debug(b"ac_ext_candidates = {}".format(ac_ext_candidates))
+    log.debug("ac_ext_candidates = {}".format(ac_ext_candidates))
 
     # When ranking extensions, their relation to tokens the user has
     # already finished is more important than to an auto-completion
@@ -172,7 +172,7 @@ def search_suggest_action(context, data_dict):
         score = _get_score(terms, [weights[t.term] for t in terms])
         if score > 0:
             scores[ac_ext_terms] = score
-    log.debug(b"scores = {}".format(scores))
+    log.debug("scores = {}".format(scores))
 
     #
     # Step 3: Format suggestions for output
