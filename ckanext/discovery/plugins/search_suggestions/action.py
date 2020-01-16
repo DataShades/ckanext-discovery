@@ -1,12 +1,12 @@
 # encoding: utf-8
 
-from builtins import zip
 from __future__ import (
     absolute_import,
     division,
     print_function,
     unicode_literals,
 )
+from builtins import zip
 
 import collections
 import itertools

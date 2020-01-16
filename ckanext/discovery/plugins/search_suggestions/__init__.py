@@ -1,12 +1,13 @@
 # encoding: utf-8
-
-from builtins import object
 from __future__ import (
     absolute_import,
     division,
     print_function,
     unicode_literals,
 )
+
+
+from builtins import object
 
 import logging
 import re
@@ -193,7 +194,7 @@ class SearchSuggestionsPlugin(plugins.SingletonPlugin):
     def update_config(self, config_):
         toolkit.add_template_directory(config_, "templates")
         # See https://github.com/ckan/ckan/issues/3397 for `b` prefixes
-        toolkit.add_resource(b"fanstatic", b"discovery_search_suggestions")
+        toolkit.add_resource("fanstatic", "discovery_search_suggestions")
 
     #
     # IPackageController

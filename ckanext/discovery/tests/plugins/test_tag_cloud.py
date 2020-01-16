@@ -4,14 +4,14 @@
 Tests for ``ckanext.discovery.plugins.tag_cloud``.
 """
 
-from builtins import range
-from builtins import object
 from __future__ import (
     absolute_import,
     division,
     print_function,
     unicode_literals,
 )
+from builtins import range
+from builtins import object
 
 import re
 
