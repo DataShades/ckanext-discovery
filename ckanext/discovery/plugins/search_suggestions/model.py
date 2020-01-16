@@ -8,6 +8,7 @@ from __future__ import (
 )
 
 import logging
+import six
 
 from sqlalchemy import Column, DDL, event, ForeignKey, Index, types
 from sqlalchemy.ext.declarative import declarative_base
@@ -15,7 +16,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.sql import func
 
-from ...model import Object
+from ckanext.discovery.model import Object
 
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ class SearchTerm(Base):
 
     def __repr__(self):
         r = '<{} "{}">'.format(self.__class__.__name__, self.term)
-        return r.encode("utf-8")
+        return r
 
     @classmethod
     def by_prefix(cls, prefix):
