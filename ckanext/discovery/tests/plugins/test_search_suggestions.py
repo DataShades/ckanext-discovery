@@ -416,8 +416,8 @@ class TestQueryStorage(object):
         Text searches are stored.
         """
         search_history()
-        self.web_request(app, "package", "search", q="dog fox")
-        self.web_request(app, "package", "search", q="dog cat")
+        self.web_request(app, "dataset", "search", q="dog fox")
+        self.web_request(app, "dataset", "search", q="dog cat")
         assert SearchTerm.get_or_create(term="dog").count == 2
         assert SearchTerm.get_or_create(term="cat").count == 1
         assert SearchTerm.get_or_create(term="fox").count == 1
@@ -430,7 +430,7 @@ class TestQueryStorage(object):
         Searches by tag only are not stored.
         """
         search_history()
-        self.web_request(app, "package", "search", tags="dog")
+        self.web_request(app, "dataset", "search", tags="dog")
         assert_empty_search_history()
 
     def test_search_by_group(self, app):
@@ -438,7 +438,7 @@ class TestQueryStorage(object):
         Searches by group only are not stored.
         """
         search_history()
-        self.web_request(app, "package", "search", groups="dog")
+        self.web_request(app, "dataset", "search", groups="dog")
         assert_empty_search_history()
 
     def test_group_search(self, app):
@@ -447,14 +447,6 @@ class TestQueryStorage(object):
         """
         search_history()
         self.web_request(app, "group", "search", q="cat")
-        assert_empty_search_history()
-
-    def test_user_search(self, app):
-        """
-        User searches are not stored.
-        """
-        search_history()
-        self.web_request(app, "user", "search", q="cat")
         assert_empty_search_history()
 
     def test_api_search(self):
@@ -479,7 +471,7 @@ class TestQueryStorage(object):
         Storing queries can be disabled.
         """
         search_history()
-        self.web_request(app, "package", "search", q="dog fox")
+        self.web_request(app, "dataset", "search", q="dog fox")
         assert_empty_search_history()
 
     def test_error_handling(self, app, caplog):
@@ -491,8 +483,8 @@ class TestQueryStorage(object):
                 # This raises an exception if the request fails, e.g. due to an
                 # internal server error caused by our exception not being
                 # handled correctly.
-                self.web_request(app, "package", "search", q="error")
-        assert "An exception occurred while storing a search query" in caplog
+                self.web_request(app, "dataset", "search", q="error")
+        assert "An exception occurred while storing a search query" in caplog.text
 
 
 class TestUI(object):
@@ -506,7 +498,7 @@ class TestUI(object):
         """
 
         response = app.get("/")
-        body = response.body.decode("utf-8")
+        body = response.body
         assert "search_suggestions.css" in body
         assert "search_suggestions.js" in body
 

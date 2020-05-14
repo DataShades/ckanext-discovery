@@ -191,7 +191,7 @@ class TestUI(object):
         tags = {"cat": 1, "dog": 2, "fox": 3, "wolf": 4, "chicken": 5}
         set_tags(**tags)
         response = app.get("/")
-        body = response.body.decode("utf-8")
+        body = response.body
         regex = r'<a\s+class="level-{}"\s+href="[^"]*"\s*>{}</a>'
         for tag, count in tags.items():
             assert_regex_search(regex.format(count, tag), body)
@@ -217,7 +217,7 @@ class TestUI(object):
             ):
 
                 response = app.get("/")
-                body = response.body.decode("utf-8")
+                body = response.body
                 tag_cloud_links = re.findall(
                     r'<a\s+class="level-\d"\s+href="[^"]*"\s*>', body
                 )

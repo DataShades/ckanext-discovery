@@ -123,7 +123,7 @@ class TestUI(SimilarDatasetsTestBase):
 
         url = tk.h.url_for(**kwargs)
         response = app.get(url)
-        body = response.body.decode("utf-8")
+        body = response.body
         return BeautifulSoup(body)
 
     def test_package_read_template(self, app):
