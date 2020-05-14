@@ -6,7 +6,6 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from builtins import zip
 
 import collections
 import itertools
@@ -47,7 +46,7 @@ def _get_score(terms, weights=None):
     """
     log.debug("Scoring {}".format([t.term for t in terms]))
     weights = weights or ([1] * len(terms))
-    weighted_terms = sorted(zip(terms, weights), key=lambda x: x[0].term)
+    weighted_terms = sorted(list(zip(terms, weights)), key=lambda x: x[0].term)
     score = 0
     for i, (term1, weight1) in enumerate(weighted_terms[:-1]):
         for term2, weight2 in weighted_terms[i + 1 :]:

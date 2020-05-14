@@ -7,8 +7,6 @@ from __future__ import (
 )
 
 
-from builtins import object
-
 import logging
 import re
 

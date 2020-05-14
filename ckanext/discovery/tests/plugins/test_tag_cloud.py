@@ -10,15 +10,10 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from builtins import range
-from builtins import object
 
 import re
 
-import mock
-from nose.tools import assert_in, eq_
-
-import ckan.tests.helpers as helpers
+import pytest
 import ckan.tests.factories as factories
 
 from ...plugins.tag_cloud import bin_tags
@@ -45,9 +40,10 @@ def assert_bins(expected, **kwargs):
     Assert that tags are binned as expected.
     """
     bins = bin_tags(**kwargs)
-    eq_(bins, expected)
+    assert bins == expected
 
 
+@pytest.mark.usefixtures("clean_db")
 class TestBinTags(object):
     """
     Tests for ``bin_tags``.
@@ -177,39 +173,37 @@ class TestBinTags(object):
         max_num = 30
         tags = {"tag{}".format(i): 1 for i in range(max_num)}
         set_tags(**tags)
-        eq_(len(bin_tags()), 20)  # Default value is 20
+        assert len(bin_tags()) == 20  # Default value is 20
         for num_tags in [0, 1, 2, 3, 10, 30, 40]:
-            eq_(len(bin_tags(num_tags=num_tags)), min(num_tags, max_num))
+            assert len(bin_tags(num_tags=num_tags)) == min(num_tags, max_num)
 
 
-class TestUI(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures("clean_db")
+class TestUI(object):
     """
     Test web UI.
     """
 
-    def test_css_classes(self):
+    def test_css_classes(self, app):
         """
         The correct CSS classes are used.
         """
         tags = {"cat": 1, "dog": 2, "fox": 3, "wolf": 4, "chicken": 5}
         set_tags(**tags)
-        app = self._get_test_app()
         response = app.get("/")
         body = response.body.decode("utf-8")
         regex = r'<a\s+class="level-{}"\s+href="[^"]*"\s*>{}</a>'
         for tag, count in tags.items():
             assert_regex_search(regex.format(count, tag), body)
 
-    def test_resources(self):
+    def test_resources(self, app):
         """
         Resources are included correctly.
         """
-        app = self._get_test_app()
         response = app.get("/")
-        body = response.body.decode("utf-8")
-        assert_in("tag_cloud.css", body)
+        assert "tag_cloud.css" in response
 
-    def test_num_tags(self):
+    def test_num_tags(self, app):
         """
         The number of tags is configurable via
         ``ckanext.discovery.tag_cloud.num_tags``.
@@ -221,10 +215,10 @@ class TestUI(helpers.FunctionalTestBase):
             with changed_config(
                 "ckanext.discovery.tag_cloud.num_tags", num_tags
             ):
-                app = self._get_test_app()
+
                 response = app.get("/")
                 body = response.body.decode("utf-8")
                 tag_cloud_links = re.findall(
                     r'<a\s+class="level-\d"\s+href="[^"]*"\s*>', body
                 )
-                eq_(len(tag_cloud_links), min(num_tags, max_num))
+                assert len(tag_cloud_links) == min(num_tags, max_num)

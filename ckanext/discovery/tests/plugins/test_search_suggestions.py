@@ -4,8 +4,6 @@
 Tests for ``ckanext.discovery.plugins.search_suggestions``.
 """
 
-from builtins import range
-from builtins import object
 from __future__ import (
     absolute_import,
     division,
@@ -13,9 +11,8 @@ from __future__ import (
     unicode_literals,
 )
 
+import pytest
 import mock
-from nose.tools import assert_in, assert_not_in, raises, eq_, ok_
-from routes import url_for
 
 from ckan.model.meta import Session
 import ckan.plugins.toolkit as toolkit
@@ -39,8 +36,6 @@ from .. import (
     assert_anonymous_access,
     with_plugin,
     temporarily_enabled_plugin,
-    paster,
-    recorded_logs,
 )
 
 
@@ -65,13 +60,7 @@ def assert_empty_search_history():
     Assert that the search history is empty.
     """
     terms = [t.term for t in SearchTerm.query()]
-    eq_(
-        len(terms),
-        0,
-        (
-            "Search history should be empty but contains the " + "terms {}"
-        ).format(terms),
-    )
+    assert len(terms) == 0
 
 
 def suggest(q):
@@ -86,17 +75,18 @@ def assert_suggestions(query, suggestions):
     Assert that a certain query gets the expected suggestions.
     """
     results = suggest(query)
-    eq_([d["value"] for d in results], suggestions)
+    assert [d["value"] for d in results] == suggestions
 
 
-class TestDiscoverySearchSuggest(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures("clean_db")
+class TestDiscoverySearchSuggest(object):
     """
     Tests for discovery_search_suggest action function.
     """
 
-    @raises(toolkit.ValidationError)
     def test_no_query(self):
-        helpers.call_action("discovery_search_suggest")
+        with pytest.raises(toolkit.ValidationError):
+            helpers.call_action("discovery_search_suggest")
 
     def test_max_content_words(self):
         """
@@ -165,16 +155,16 @@ class TestDiscoverySearchSuggest(helpers.FunctionalTestBase):
         )
         KEY = "ckanext.discovery.search_suggestions.limit"
         # Default is 4
-        eq_(len(suggest("b")), 4)
+        assert len(suggest("b")) == 4
 
         # Explicit limit
         for limit in range(8):
             with changed_config(KEY, limit):
-                eq_(len(suggest("b")), limit)
+                assert len(suggest("b")) == limit
 
         # Make sure a too high limit doesn't break things
         with changed_config(KEY, 10):
-            eq_(len(suggest("b")), 7)
+            assert len(suggest("b")) == 7
 
     def test_markup(self):
         """
@@ -191,10 +181,10 @@ class TestDiscoverySearchSuggest(helpers.FunctionalTestBase):
         for item in results:
             value = item["value"]
             label = item["label"]
-            ok_(value.startswith(q))
-            ok_(label.startswith(q))
+            assert value.startswith(q)
+            assert label.startswith(q)
             n = len(q)
-            eq_("<strong>{}</strong>".format(value[n:]), label[n:])
+            assert "<strong>{}</strong>".format(value[n:]) == label[n:]
 
     def test_anonymous_access(self):
         """
@@ -206,7 +196,7 @@ class TestDiscoverySearchSuggest(helpers.FunctionalTestBase):
         """
         An empty query returns no suggestions.
         """
-        eq_(suggest(""), [])
+        assert suggest("") == []
 
     def test_no_automcompletion_for_pseudo_complete_term(self):
         """
@@ -243,7 +233,7 @@ class TestSearchQuery(object):
         """
         Search queries are converted to lower-case.
         """
-        eq_(SearchQuery("FOO! bar?").string, "foo! bar?")
+        assert SearchQuery("FOO! bar?").string == "foo! bar?"
 
     def test_query_splitting(self):
         """
@@ -258,7 +248,7 @@ class TestSearchQuery(object):
             ["!ä_b?c=d<è>f:g#h(i)j[k]", "ä b c d è f g h i j k"],
         ]
         for string, expected in cases:
-            eq_(SearchQuery(string).words, expected.split())
+            assert SearchQuery(string).words == expected.split()
 
     @mock.patch(
         "ckanext.discovery.plugins.search_suggestions.preprocess_search_term",
@@ -269,10 +259,11 @@ class TestSearchQuery(object):
         Query words are preprocessed via ``preprocess_search_term``.
         """
         SearchQuery("fox dog chicken")
-        eq_(
-            preprocess_search_term.mock_calls,
-            [mock.call("fox"), mock.call("dog"), mock.call("chicken")],
-        )
+        assert preprocess_search_term.mock_calls == [
+            mock.call("fox"),
+            mock.call("dog"),
+            mock.call("chicken"),
+        ]
 
     def test_is_last_word_complete(self):
         """
@@ -285,7 +276,7 @@ class TestSearchQuery(object):
             ["dog fox", False],
         ]
         for string, expected in cases:
-            eq_(SearchQuery(string).is_last_word_complete, expected)
+            assert SearchQuery(string).is_last_word_complete == expected
 
     def test_last_word(self):
         """
@@ -303,14 +294,14 @@ class TestSearchQuery(object):
             ["fox dog\n", "dog"],
         ]
         for string, expected in cases:
-            eq_(SearchQuery(string).last_word, expected)
+            assert SearchQuery(string).last_word == expected
 
-    @raises(IndexError)
     def test_last_word_for_empty_query(self):
         """
         Can't get the last word of an empty query
         """
-        SearchQuery("  \t \n  ").last_word
+        with pytest.raises(IndexError):
+            SearchQuery("  \t \n  ").last_word
 
     def test_store(self):
         """
@@ -321,22 +312,22 @@ class TestSearchQuery(object):
         SearchQuery("wolf dog fox").store()
         SearchQuery("chicken").store()
         SearchQuery("dog cat chicken").store()
-        eq_(SearchTerm.get_or_create(term="dog").count, 3)
-        eq_(SearchTerm.get_or_create(term="cat").count, 2)
-        eq_(SearchTerm.get_or_create(term="wolf").count, 1)
-        eq_(SearchTerm.get_or_create(term="fox").count, 1)
-        eq_(SearchTerm.get_or_create(term="chicken").count, 2)
-        eq_(CoOccurrence.for_words("dog", "cat").count, 2)
-        eq_(CoOccurrence.for_words("wolf", "dog").count, 1)
-        eq_(CoOccurrence.for_words("wolf", "fox").count, 1)
-        eq_(CoOccurrence.for_words("dog", "fox").count, 1)
-        eq_(CoOccurrence.for_words("dog", "chicken").count, 1)
-        eq_(CoOccurrence.for_words("cat", "chicken").count, 1)
-        eq_(CoOccurrence.for_words("cat", "chicken").count, 1)
-        eq_(CoOccurrence.for_words("wolf", "chicken").count, 0)
-        eq_(CoOccurrence.for_words("fox", "chicken").count, 0)
-        eq_(CoOccurrence.for_words("fox", "cat").count, 0)
-        eq_(CoOccurrence.for_words("wolf", "cat").count, 0)
+        assert SearchTerm.get_or_create(term="dog").count == 3
+        assert SearchTerm.get_or_create(term="cat").count == 2
+        assert SearchTerm.get_or_create(term="wolf").count == 1
+        assert SearchTerm.get_or_create(term="fox").count == 1
+        assert SearchTerm.get_or_create(term="chicken").count == 2
+        assert CoOccurrence.for_words("dog", "cat").count == 2
+        assert CoOccurrence.for_words("wolf", "dog").count == 1
+        assert CoOccurrence.for_words("wolf", "fox").count == 1
+        assert CoOccurrence.for_words("dog", "fox").count == 1
+        assert CoOccurrence.for_words("dog", "chicken").count == 1
+        assert CoOccurrence.for_words("cat", "chicken").count == 1
+        assert CoOccurrence.for_words("cat", "chicken").count == 1
+        assert CoOccurrence.for_words("wolf", "chicken").count == 0
+        assert CoOccurrence.for_words("fox", "chicken").count == 0
+        assert CoOccurrence.for_words("fox", "cat").count == 0
+        assert CoOccurrence.for_words("wolf", "cat").count == 0
 
 
 class MockSearchTermPreprocessor(SingletonPlugin):
@@ -372,7 +363,7 @@ class TestPreprocessSearchTerm(object):
             ["-Ä_b-c$z2*3 f-", "äb-cz23f"],
         ]
         for term, expected in cases:
-            eq_(preprocess_search_term(term), expected)
+            assert preprocess_search_term(term) == expected
 
 
 class TestReprocess(object):
@@ -385,11 +376,11 @@ class TestReprocess(object):
         with temporarily_enabled_plugin(MockSearchTermPreprocessor):
             reprocess()
         terms = set(t.term for t in SearchTerm.query())
-        eq_(terms, {"äb-cz23f", "other"})
+        assert terms == {"äb-cz23f", "other"}
         cooccs = set(
             (c.term1.term, c.term2.term) for c in CoOccurrence.query()
         )
-        eq_(cooccs, {("other", "äb-cz23f")})
+        assert cooccs == {("other", "äb-cz23f")}
 
 
 class TestISearchTermPreprocessor(object):
@@ -399,15 +390,16 @@ class TestISearchTermPreprocessor(object):
 
     def test_default_implementation(self):
         plugin = ISearchTermPreprocessor()
-        eq_(plugin.preprocess_search_term("cat"), "cat")
+        assert plugin.preprocess_search_term("cat") == "cat"
 
 
-class TestQueryStorage(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures("clean_db")
+class TestQueryStorage(object):
     """
     Test automatic search query storage.
     """
 
-    def web_request(self, controller, action, **kwargs):
+    def web_request(self, app, controller, action, **kwargs):
         """
         Perform a web-request.
 
@@ -416,54 +408,53 @@ class TestQueryStorage(helpers.FunctionalTestBase):
 
         Returns the response.
         """
-        app = self._get_test_app()
-        url = url_for(controller=controller, action=action)
+        url = toolkit.h.url_for(controller=controller, action=action)
         return app.get(url, params=kwargs)
 
-    def test_text_search(self):
+    def test_text_search(self, app):
         """
         Text searches are stored.
         """
         search_history()
-        self.web_request("package", "search", q="dog fox")
-        self.web_request("package", "search", q="dog cat")
-        eq_(SearchTerm.get_or_create(term="dog").count, 2)
-        eq_(SearchTerm.get_or_create(term="cat").count, 1)
-        eq_(SearchTerm.get_or_create(term="fox").count, 1)
-        eq_(CoOccurrence.for_words("dog", "cat").count, 1)
-        eq_(CoOccurrence.for_words("dog", "fox").count, 1)
-        eq_(CoOccurrence.for_words("fox", "cat").count, 0)
+        self.web_request(app, "package", "search", q="dog fox")
+        self.web_request(app, "package", "search", q="dog cat")
+        assert SearchTerm.get_or_create(term="dog").count == 2
+        assert SearchTerm.get_or_create(term="cat").count == 1
+        assert SearchTerm.get_or_create(term="fox").count == 1
+        assert CoOccurrence.for_words("dog", "cat").count == 1
+        assert CoOccurrence.for_words("dog", "fox").count == 1
+        assert CoOccurrence.for_words("fox", "cat").count == 0
 
-    def test_search_by_tag(self):
+    def test_search_by_tag(self, app):
         """
         Searches by tag only are not stored.
         """
         search_history()
-        self.web_request("package", "search", tags="dog")
+        self.web_request(app, "package", "search", tags="dog")
         assert_empty_search_history()
 
-    def test_search_by_group(self):
+    def test_search_by_group(self, app):
         """
         Searches by group only are not stored.
         """
         search_history()
-        self.web_request("package", "search", groups="dog")
+        self.web_request(app, "package", "search", groups="dog")
         assert_empty_search_history()
 
-    def test_group_search(self):
+    def test_group_search(self, app):
         """
         Group searches are not stored.
         """
         search_history()
-        self.web_request("group", "search", q="cat")
+        self.web_request(app, "group", "search", q="cat")
         assert_empty_search_history()
 
-    def test_user_search(self):
+    def test_user_search(self, app):
         """
         User searches are not stored.
         """
         search_history()
-        self.web_request("user", "search", q="cat")
+        self.web_request(app, "user", "search", q="cat")
         assert_empty_search_history()
 
     def test_api_search(self):
@@ -483,84 +474,56 @@ class TestQueryStorage(helpers.FunctionalTestBase):
     @helpers.change_config(
         "ckanext.discovery.search_suggestions.store_queries", "false"
     )
-    def test_disabled_storage(self):
+    def test_disabled_storage(self, app):
         """
         Storing queries can be disabled.
         """
         search_history()
-        self.web_request("package", "search", q="dog fox")
+        self.web_request(app, "package", "search", q="dog fox")
         assert_empty_search_history()
 
-    def test_error_handling(self):
+    def test_error_handling(self, app, caplog):
         """
         Errors during search term storage are logged and don't cause the
         search to fail.
         """
-        with recorded_logs(search_suggestions_log) as logs:
-            with temporarily_enabled_plugin(MockSearchTermPreprocessor):
+        with temporarily_enabled_plugin(MockSearchTermPreprocessor):
                 # This raises an exception if the request fails, e.g. due to an
                 # internal server error caused by our exception not being
                 # handled correctly.
-                self.web_request("package", "search", q="error")
-        logs.assert_log(
-            "error", "An exception occurred while storing a search query"
-        )
+                self.web_request(app, "package", "search", q="error")
+        assert "An exception occurred while storing a search query" in caplog
 
 
-class TestPaster(object):
-    """
-    Test paster CLI commands.
-    """
-
-    def test_list(self):
-        search_history("cat dog wolf")
-        stdout = paster("search_suggestions", "list")[1]
-        words = set(stdout.strip().splitlines())
-        eq_(words, {"cat", "dog", "wolf"})
-
-    @mock.patch("ckanext.discovery.plugins.search_suggestions.reprocess")
-    def test_reprocess(self, reprocess):
-        paster("search_suggestions", "reprocess")
-        reprocess.assert_called()
-
-    @mock.patch(
-        "ckanext.discovery.plugins.search_suggestions.model.create_tables"
-    )
-    def test_init(self, create_tables):
-        paster("search_suggestions", "init")
-        create_tables.assert_called()
-
-
-class TestUI(helpers.FunctionalTestBase):
+class TestUI(object):
     """
     Test web UI.
     """
 
-    def test_resources(self):
+    def test_resources(self, app):
         """
         JS and CSS resources are included correctly.
         """
-        app = self._get_test_app()
+
         response = app.get("/")
         body = response.body.decode("utf-8")
-        assert_in("search_suggestions.css", body)
-        assert_in("search_suggestions.js", body)
+        assert "search_suggestions.css" in body
+        assert "search_suggestions.js" in body
 
     @helpers.change_config(
         "ckanext.discovery.search_suggestions.provide_suggestions", "false"
     )
-    def test_disabled_suggestions(self):
+    def test_disabled_suggestions(self, app):
         """
         Suggestions can be disabled.
         """
-        app = self._get_test_app()
         response = app.get("/")
-        body = response.body.decode("utf-8")
-        assert_not_in("search_suggestions.css", body)
-        assert_not_in("search_suggestions.js", body)
+        assert "search_suggestions.css" not in response
+        assert "search_suggestions.js" not in response
 
 
-class TestCreateTables(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures("clean_db")
+class TestCreateTables(object):
     """
     Test ``model.create_tables``.
     """
@@ -572,9 +535,8 @@ class TestCreateTables(helpers.FunctionalTestBase):
             dog cat
         """
         )
-        create_tables()
-        eq_(SearchTerm.get_or_create(term="dog").count, 2)
-        eq_(SearchTerm.get_or_create(term="fox").count, 1)
-        eq_(SearchTerm.get_or_create(term="cat").count, 1)
-        eq_(CoOccurrence.for_words("dog", "fox").count, 1)
-        eq_(CoOccurrence.for_words("dog", "cat").count, 1)
+        assert SearchTerm.get_or_create(term="dog").count == 2
+        assert SearchTerm.get_or_create(term="fox").count == 1
+        assert SearchTerm.get_or_create(term="cat").count == 1
+        assert CoOccurrence.for_words("dog", "fox").count == 1
+        assert CoOccurrence.for_words("dog", "cat").count == 1
